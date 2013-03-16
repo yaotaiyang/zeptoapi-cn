@@ -3345,7 +3345,7 @@ $(<span class="s1">"#test"</span>).click( jQuery.proxy( obj, "test" ));<code cla
   <pre class=signature><code>live(type, function(e){ ... }) ⇒ self
       live({ type: handler, type2: handler2, ... }) ⇒ self</code></pre>
 
-    <p>类似<a href="#delegate">delegate</a>，其中selector参数为当前Zepto集合对象。</p>
+    <p>类似<a href="#delegate">delegate</a>，添加一个个事件处理器到符合目前选择器的所有元素匹配，匹配的元素可能现在或将来才创建。</p>
 </article>
 
 <article class=method id="off">
@@ -4546,5 +4546,109 @@ on方法继集成bind和delegate方法。</pre>
 </section>
 
 </div>
+<script type="text/javascript" src="http://zeptojs.com/zepto.min.js"></script>
+<script type="text/javascript" src="http://zeptojs.com/touch.js"></script>
+<script type="text/javascript">
+    var reflowTimeout;
+
+    function injectScript(src) {
+        var s = document.createElement('script')
+        s.src = src; s.async = true
+        $('script').first().before(s)
+    }
+
+    // Reflow all elements on the page. <david@14islands.com>
+    function reflowFixedPositions() {
+        var docStyle = document.documentElement.style
+        docStyle.paddingRight = '1px'
+        setTimeout(function(){ docStyle.paddingRight = '' }, 0)
+    }
+
+    $('.signature code').html(function(i, html){
+        return html
+                .replace(/\[([^\[]+)\]$/mg, '<span class=version>$1+</span>')
+                .replace(/\)([^()]+)$/mg, ') <span class=return>$1</span>')
+    })
+
+    $(document).on('mouseover', 'span.version', function(){
+        var el = $(this)
+        if (!el.attr('title'))
+            el.attr('title', "This feature is only available in Zepto " + el.text())
+    })
+
+    if ($.os.ios || /\bMac.+\bSafari\b/.test(navigator.userAgent))
+        $(document.body).addClass('emoji-enabled')
+
+    // don't follow links when the sidebar is tap-enabled
+    $('#sidebar').on('click', 'a', function(e){
+        return !$('body').hasClass('navigating')
+    })
+
+    $('#sidebar').on('tap', 'a', function(e){
+        location.href = this.href;
+
+        closeMenu()
+        setTimeout(function(){
+            // fixes sidebar becoming unscrollable in Safari 6
+            reflowFixedPositions()
+        }, 10)
+        return false
+    })
+
+    $(window).on('scroll', function(){
+        if(reflowTimeout) clearTimeout(reflowTimeout)
+        reflowTimeout = setTimeout(reflowFixedPositions, 200)
+    })
+
+    function closeMenu(){
+        if ($('body').hasClass('navigating')) {
+            $('body').removeClass('navigating')
+            setTimeout(function(){
+                $('#sidebar').css('display','none')
+            }, 350)
+        }
+    }
+
+    // show/hide menu on mobile
+    $('#menu_icon').on('tap', function(){
+        if ($('body').hasClass('navigating')) {
+            closeMenu()
+        } else {
+            $('#sidebar').css('display','block')
+            $('#sidebar')[0].offsetLeft // force render
+            $('body').addClass('navigating')
+        }
+        return false
+    })
+
+    // change the title of the page so bookmarks have a better default
+    if ($.os.ios || $.os.android)
+        document.title = 'Zepto Docs'
+
+    // For retina screens, use a hi-res version of the tour image.
+    // We're swapping this out on-demand (not an ideal solution)
+    // to avoid rendering bugs on iOS.
+    $('#tour > img')[0].src =
+            ('devicePixelRatio' in window && devicePixelRatio > 1) ?
+                    'intro2x.jpg' : 'intro.jpg'
+
+    var tour = $('#tour'), tourSlides = tour.children(),
+            tourSlide = 0, tourSlidesTotal = 5
+
+    function advanceTourSlide(delta){
+        tourSlide = (tourSlide + delta + tourSlidesTotal) % tourSlidesTotal
+        var offset = tourSlide * tour.width()
+        tourSlides.animate({ translateX: -offset + 'px' })
+    }
+
+    tour.on('click swipeLeft', function(){ advanceTourSlide(+1) })
+            .on('swipeRight', function(){ advanceTourSlide(-1) })
+
+    /*if (/^localhost|\.(dev|local)$/.test(location.hostname) && $.os.iphone && !/Simulator/.test(navigator.userAgent))
+     injectScript('livereload.js')
+
+     if (/\.com$/.test(location.hostname))
+     injectScript('http://platform.twitter.com/widgets.js') */
+</script>
 </body>
 </html>
