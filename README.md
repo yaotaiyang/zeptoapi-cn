@@ -2,4 +2,3 @@
 
 在线浏览地址：
 * http://mweb.baidu.com/zeptoapi/
-* http://yaotaiyang.github.com/zeptoapi-cn/
